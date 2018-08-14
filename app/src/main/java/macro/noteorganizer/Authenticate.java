@@ -24,7 +24,32 @@ public class Authenticate extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_authenticate);
 
-        AWSMobileClient.getInstance().initialize(this).execute();
+        AWSMobileClient.getInstance().initialize(Authenticate.this, new AWSStartupHandler() {
+            @Override
+            public void onComplete(AWSStartupResult awsStartupResult) {
+                IdentityManager.getDefaultIdentityManager().getUserID(new IdentityHandler() {
+
+                    @Override
+                    public void onIdentityId(String s) {
+
+                        //The network call to fetch AWS credentials succeeded, the cached
+                        // user ID is available from IdentityManager throughout your app
+                        Log.d("MainActivity", "Identity ID is: " + s);
+                        Log.d("MainActivity", "Cached Identity ID: " + IdentityManager.getDefaultIdentityManager().getCachedUserID());
+                    }
+
+                    @Override
+                    public void handleError(Exception e) {
+                        Log.e("MainActivity", "Error in retrieving Identity ID: " + e.getMessage());
+                    }
+                });
+                SignIn();
+            }
+        }).execute();
+    }
+
+    public void SignIn() {
+        SignInUI sign = (SignInUI) AWSMobileClient.getInstance().getClient(Authenticate.this, SignInUI.class);
         IdentityManager.getDefaultIdentityManager().addSignInStateChangeListener(new SignInStateChangeListener() {
             @Override
             public void onUserSignedIn() {
@@ -37,11 +62,6 @@ public class Authenticate extends AppCompatActivity {
                 SignIn();
             }
         });
-        SignIn();
-    }
-
-    private void SignIn() {
-        SignInUI sign = (SignInUI) AWSMobileClient.getInstance().getClient(Authenticate.this, SignInUI.class);
         sign.login(Authenticate.this, Notes.class).execute();
     }
 }

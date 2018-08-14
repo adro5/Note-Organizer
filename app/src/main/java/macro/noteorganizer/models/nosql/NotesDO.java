@@ -15,13 +15,13 @@ import java.util.Set;
 
 public class NotesDO {
     private String _userId;
-    private String _noteId;
     private String _content;
-    private Double _creationDate;
+    private String _creationDate;
+    private String _noteId;
     private String _title;
 
     @DynamoDBHashKey(attributeName = "userId")
-    @DynamoDBIndexHashKey(attributeName = "userId", globalSecondaryIndexName = "DateSorted")
+    @DynamoDBIndexHashKey(attributeName = "userId", globalSecondaryIndexNames = {"NoteContent","DateSorted","NoteTitle",})
     public String getUserId() {
         return _userId;
     }
@@ -29,16 +29,7 @@ public class NotesDO {
     public void setUserId(final String _userId) {
         this._userId = _userId;
     }
-    @DynamoDBRangeKey(attributeName = "noteId")
-    @DynamoDBAttribute(attributeName = "noteId")
-    public String getNoteId() {
-        return _noteId;
-    }
-
-    public void setNoteId(final String _noteId) {
-        this._noteId = _noteId;
-    }
-    @DynamoDBAttribute(attributeName = "content")
+    @DynamoDBIndexRangeKey(attributeName = "content", globalSecondaryIndexName = "NoteContent")
     public String getContent() {
         return _content;
     }
@@ -47,14 +38,22 @@ public class NotesDO {
         this._content = _content;
     }
     @DynamoDBIndexRangeKey(attributeName = "creationDate", globalSecondaryIndexName = "DateSorted")
-    public Double getCreationDate() {
+    public String getCreationDate() {
         return _creationDate;
     }
 
-    public void setCreationDate(final Double _creationDate) {
+    public void setCreationDate(final String _creationDate) {
         this._creationDate = _creationDate;
     }
-    @DynamoDBAttribute(attributeName = "title")
+    @DynamoDBAttribute(attributeName = "noteId")
+    public String getNoteId() {
+        return _noteId;
+    }
+
+    public void setNoteId(final String _noteId) {
+        this._noteId = _noteId;
+    }
+    @DynamoDBIndexRangeKey(attributeName = "title", globalSecondaryIndexName = "NoteTitle")
     public String getTitle() {
         return _title;
     }
