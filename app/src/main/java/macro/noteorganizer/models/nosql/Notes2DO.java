@@ -11,17 +11,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@DynamoDBTable(tableName = "noteorganizer-mobilehub-923302063-Notes")
+@DynamoDBTable(tableName = "noteorganizer-mobilehub-923302063-Notes2")
 
-public class NotesDO {
+public class Notes2DO {
     private String _userId;
+    private String _noteId;
     private String _content;
     private String _creationDate;
-    private String _noteId;
     private String _title;
 
     @DynamoDBHashKey(attributeName = "userId")
-    @DynamoDBIndexHashKey(attributeName = "userId", globalSecondaryIndexNames = {"NoteContent","DateSorted","NoteTitle",})
+    @DynamoDBIndexHashKey(attributeName = "userId", globalSecondaryIndexName = "DateSorted")
     public String getUserId() {
         return _userId;
     }
@@ -29,7 +29,16 @@ public class NotesDO {
     public void setUserId(final String _userId) {
         this._userId = _userId;
     }
-    @DynamoDBIndexRangeKey(attributeName = "content", globalSecondaryIndexName = "NoteContent")
+    @DynamoDBRangeKey(attributeName = "noteId")
+    @DynamoDBAttribute(attributeName = "noteId")
+    public String getNoteId() {
+        return _noteId;
+    }
+
+    public void setNoteId(final String _noteId) {
+        this._noteId = _noteId;
+    }
+    @DynamoDBAttribute(attributeName = "content")
     public String getContent() {
         return _content;
     }
@@ -45,15 +54,7 @@ public class NotesDO {
     public void setCreationDate(final String _creationDate) {
         this._creationDate = _creationDate;
     }
-    @DynamoDBAttribute(attributeName = "noteId")
-    public String getNoteId() {
-        return _noteId;
-    }
-
-    public void setNoteId(final String _noteId) {
-        this._noteId = _noteId;
-    }
-    @DynamoDBIndexRangeKey(attributeName = "title", globalSecondaryIndexName = "NoteTitle")
+    @DynamoDBAttribute(attributeName = "title")
     public String getTitle() {
         return _title;
     }

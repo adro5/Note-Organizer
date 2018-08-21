@@ -9,16 +9,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
-import macro.noteorganizer.models.nosql.NotesDO;
+import macro.noteorganizer.models.nosql.Notes2DO;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> {
 
-    public List<NotesDO> notes;
+    public List<Notes2DO> notes;
 
-    public RecyclerViewAdapter(List<NotesDO> n) {
+    public RecyclerViewAdapter(List<Notes2DO> n) {
         notes = n;
     }
 
@@ -35,12 +40,16 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     @Override
     public void onBindViewHolder(RecyclerViewAdapter.ViewHolder viewHolder, int i) {
-        NotesDO note = notes.get(i);
+        Notes2DO note = notes.get(i);
 
-        TextView textView = viewHolder.title;
-        textView.setText(note.getTitle());
-        TextView textView1 = viewHolder.content;
-        textView1.setText(note.getContent());
+        TextView textTitle = viewHolder.title;
+        textTitle.setText(note.getTitle());
+
+        TextView textDate = viewHolder.date;
+        textDate.setText(note.getCreationDate());
+
+        TextView textContent = viewHolder.content;
+        textContent.setText(note.getContent());
     }
 
     @Override
@@ -52,11 +61,13 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     public class ViewHolder extends RecyclerView.ViewHolder {
         public TextView title;
         public TextView content;
+        public TextView date;
 
         public ViewHolder(View v) {
             super(v);
 
             title = (TextView) v.findViewById(R.id.textView_title);
+            date = (TextView) v.findViewById(R.id.textView_date);
             content = (TextView) v.findViewById(R.id.textView_content);
         }
     }

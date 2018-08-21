@@ -17,14 +17,13 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 
 import java.util.Calendar;
 
-import macro.noteorganizer.models.nosql.NotesDO;
+import macro.noteorganizer.models.nosql.Notes2DO;
 
 public class AddNewNote extends AppCompatActivity {
 
     EditText textTitle;
     EditText textContent;
     Button btnAdd;
-
     AWSCredentialsProvider credentialsProvider;
     AWSConfiguration configuration;
     DynamoDBMapper dbMapper;
@@ -50,7 +49,7 @@ public class AddNewNote extends AppCompatActivity {
     }
 
     private void btnClick() {
-        final NotesDO notes = new NotesDO();
+        final Notes2DO notes = new Notes2DO();
         notes.setUserId(IdentityManager.getDefaultIdentityManager().getCachedUserID());
         notes.setTitle(textTitle.getText().toString());
         notes.setContent(textContent.getText().toString());
@@ -60,7 +59,7 @@ public class AddNewNote extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                dbMapper.
+                dbMapper.save(notes);
             }
         }).start();
         finish();

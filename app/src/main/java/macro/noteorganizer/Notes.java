@@ -7,6 +7,7 @@ import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -47,7 +48,7 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import macro.noteorganizer.models.nosql.NotesDO;
+import macro.noteorganizer.models.nosql.Notes2DO;
 
 public class Notes extends AppCompatActivity {
 
@@ -56,7 +57,7 @@ public class Notes extends AppCompatActivity {
     DynamoDBMapper dynamoDBMapper;
     RecyclerView recyclerView;
 
-    List<NotesDO> notesDOS;
+    List<Notes2DO> notesDOS;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,7 +67,7 @@ public class Notes extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        notesDOS = Collections.synchronizedList(new ArrayList<NotesDO>());
+        notesDOS = Collections.synchronizedList(new ArrayList<Notes2DO>());
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -91,7 +92,8 @@ public class Notes extends AppCompatActivity {
         RetrieveDBInfo();
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler);
-
+        RecyclerView.ItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
+        recyclerView.addItemDecoration(divider);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setHasFixedSize(false);
@@ -144,7 +146,7 @@ public class Notes extends AppCompatActivity {
             }
         }
         /*synchronized (this) {
-            PaginatedList<NotesDO> result = dynamoDBMapper.query(NotesDO.class, queryExpression);
+            PaginatedList<Notes2DO> result = dynamoDBMapper.query(Notes2DO.class, queryExpression);
             if (!result.isEmpty()) {
                 notesDOS.addAll(result);
 
@@ -163,7 +165,7 @@ public class Notes extends AppCompatActivity {
     }
 
     private class DBThread extends Thread {
-        final NotesDO notesDO = new NotesDO();
+        final Notes2DO notesDO = new Notes2DO();
 
 
         DynamoDBQueryExpression queryExpression;
@@ -171,7 +173,7 @@ public class Notes extends AppCompatActivity {
         public void run() {
             synchronized (this) {
                 init();
-                PaginatedList<NotesDO> result = dynamoDBMapper.query(NotesDO.class, queryExpression);
+                PaginatedList<Notes2DO> result = dynamoDBMapper.query(Notes2DO.class, queryExpression);
                 if (!result.isEmpty()) {
                     notesDOS.addAll(result);
                 }

@@ -9,13 +9,26 @@
 
     <TextView
         android:id="@+id/textView_title"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:layout_weight="1"/>
-
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:paddingEnd="5dp"
+        android:paddingStart="5dp"
+        android:textSize="12sp"
+        android:textStyle="bold"/>
+    <TextView
+        android:id="@+id/textView_date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:textSize="14sp"/>
     <TextView
         android:id="@+id/textView_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="12sp"/>
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:textSize="14sp"/>
 </LinearLayout>
