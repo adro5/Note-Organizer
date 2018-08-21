@@ -3,26 +3,27 @@ package macro.noteorganizer;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import macro.noteorganizer.models.nosql.NotesDO;
 
-public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> implements View.OnClickListener {
+public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> {
 
-    public ArrayList<NotesDO> notes;
+    public List<NotesDO> notes;
 
-    public RecyclerViewAdapter(ArrayList<NotesDO> n) {
+    public RecyclerViewAdapter(List<NotesDO> n) {
         notes = n;
     }
 
-    @NonNull
     @Override
-    public RecyclerViewAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+    public RecyclerViewAdapter.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
         Context context = viewGroup.getContext();
         LayoutInflater inflater = LayoutInflater.from(context);
 
@@ -33,7 +34,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerViewAdapter.ViewHolder viewHolder, int i) {
+    public void onBindViewHolder(RecyclerViewAdapter.ViewHolder viewHolder, int i) {
         NotesDO note = notes.get(i);
 
         TextView textView = viewHolder.title;
@@ -47,12 +48,8 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         return notes.size();
     }
 
-    @Override
-    public void onClick(View view) {
 
-    }
-
-    protected static class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder {
         public TextView title;
         public TextView content;
 

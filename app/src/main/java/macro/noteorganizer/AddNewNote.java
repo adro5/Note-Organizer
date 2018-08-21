@@ -60,7 +60,7 @@ public class AddNewNote extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                dbMapper.save(notes);
+                dbMapper.
             }
         }).start();
         finish();

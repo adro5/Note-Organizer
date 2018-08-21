@@ -2,6 +2,7 @@ package macro.noteorganizer;
 
 import android.content.Intent;
 import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -39,33 +40,23 @@ import com.amazonaws.services.dynamodbv2.model.Condition;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import macro.noteorganizer.models.nosql.NotesDO;
 
 public class Notes extends AppCompatActivity {
 
-    /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-     */
-    private SectionsPagerAdapter mSectionsPagerAdapter;
-
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
     private ViewPager mViewPager;
 
     DynamoDBMapper dynamoDBMapper;
     RecyclerView recyclerView;
 
-    ArrayList<NotesDO> notesDOS;
+    List<NotesDO> notesDOS;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,19 +65,8 @@ public class Notes extends AppCompatActivity {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        // Create the adapter that will return a fragment for each of the three
-        // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
-        // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.container);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
-
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
-        notesDOS = new ArrayList<NotesDO>();
-
-        mViewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
-        tabLayout.addOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(mViewPager));
+        notesDOS = Collections.synchronizedList(new ArrayList<NotesDO>());
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -95,7 +75,6 @@ public class Notes extends AppCompatActivity {
                 startActivity(new Intent(Notes.this, AddNewNote.class));
             }
         });
-
 
         AWSCredentialsProvider credentialsProvider = AWSMobileClient.getInstance().getCredentialsProvider();
         AWSConfiguration configuration = AWSMobileClient.getInstance().getConfiguration();
@@ -109,8 +88,14 @@ public class Notes extends AppCompatActivity {
                 .awsConfiguration(configuration)
                 .build();
 
-        UpdateRecyclerList();
+        RetrieveDBInfo();
 
+        recyclerView = (RecyclerView) findViewById(R.id.recycler);
+
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setHasFixedSize(false);
+        recyclerView.setAdapter(new RecyclerViewAdapter(notesDOS));
     }
 
 
@@ -139,99 +124,65 @@ public class Notes extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
     public void RetrieveDBInfo() {
-        new Thread(new Runnable() {
+        DBThread dbThread = new DBThread();
+        dbThread.start();
+        /*new Thread(new Runnable() {
             @Override
             public void run() {
-                NotesDO notesDO = new NotesDO();
-                notesDO.setUserId(IdentityManager.getDefaultIdentityManager().getCachedUserID());
 
-                DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
-                        .withHashKeyValues(notesDO)
-                        .withConsistentRead(false);
-
-                PaginatedList<NotesDO> result = dynamoDBMapper.query(NotesDO.class, queryExpression);
-
-                if (!result.isEmpty()) {
-                    for (int i = 0; i < result.size(); i++) {
-                        notesDOS.add(result.get(i));
-                    }
-                }
             }
-        }).start();
+        }).start();*/
+        synchronized (dbThread) {
+            try {
+                Log.d("Waiting...", "Waiting for completion");
+                dbThread.wait();
+            }
+            catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+        }
+        /*synchronized (this) {
+            PaginatedList<NotesDO> result = dynamoDBMapper.query(NotesDO.class, queryExpression);
+            if (!result.isEmpty()) {
+                notesDOS.addAll(result);
+
+            }
+        }*/
+
+        Log.d("RetrieveDB", String.format("%d",notesDOS.size()));
     }
 
     public void UpdateRecyclerList() {
-        
-        recyclerView = (RecyclerView) findViewById(R.id.recycler_list);
-        RetrieveDBInfo();
 
-        if (!notesDOS.isEmpty()) {
-            recyclerView.setAdapter(new RecyclerViewAdapter(notesDOS));
-
-            recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        }
     }
 
     public void SignOut() {
         IdentityManager.getDefaultIdentityManager().signOut();
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
+    private class DBThread extends Thread {
+        final NotesDO notesDO = new NotesDO();
 
-        public PlaceholderFragment() {
-        }
 
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
+        DynamoDBQueryExpression queryExpression;
         @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_notes, container, false);
-
-            return rootView;
-        }
-    }
-
-    /**
-     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
-     * one of the sections/tabs/pages.
-     */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
-
-        public SectionsPagerAdapter(FragmentManager fm) {
-            super(fm);
+        public void run() {
+            synchronized (this) {
+                init();
+                PaginatedList<NotesDO> result = dynamoDBMapper.query(NotesDO.class, queryExpression);
+                if (!result.isEmpty()) {
+                    notesDOS.addAll(result);
+                }
+                notify();
+            }
         }
 
-        @Override
-        public Fragment getItem(int position) {
-            // getItem is called to instantiate the fragment for the given page.
-            // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(position + 1);
-        }
-
-        @Override
-        public int getCount() {
-            // Show 3 total pages.
-            return 3;
+        public void init() {
+            queryExpression = new DynamoDBQueryExpression().withHashKeyValues(notesDO)
+                    .withConsistentRead(false);
+            notesDO.setUserId(IdentityManager.getDefaultIdentityManager().getCachedUserID());
         }
     }
 }
