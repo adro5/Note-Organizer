@@ -16,9 +16,6 @@ import com.amazonaws.mobile.config.AWSConfiguration;
 
 public class Authenticate extends AppCompatActivity {
 
-    AWSCredentialsProvider credentialsProvider;
-    AWSConfiguration configuration;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

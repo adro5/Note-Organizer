@@ -5,8 +5,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.mobile.auth.core.IdentityManager;
@@ -23,11 +21,7 @@ public class AddNewNote extends AppCompatActivity {
 
     EditText textTitle;
     EditText textContent;
-    Button btnAdd;
-    AWSCredentialsProvider credentialsProvider;
-    AWSConfiguration configuration;
     DynamoDBMapper dbMapper;
-    AmazonDynamoDBClient dbClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +29,7 @@ public class AddNewNote extends AppCompatActivity {
         setContentView(R.layout.activity_add_new_note);
         textTitle = (EditText) findViewById(R.id.editText_title);
         textContent = (EditText) findViewById(R.id.editText_content);
-        btnAdd = (Button) findViewById(R.id.button_add);
+        Button btnAdd = (Button) findViewById(R.id.button_add);
 
         dbInit();
 
@@ -66,9 +60,9 @@ public class AddNewNote extends AppCompatActivity {
     }
 
     private void dbInit() {
-        credentialsProvider = AWSMobileClient.getInstance().getCredentialsProvider();
-        configuration = AWSMobileClient.getInstance().getConfiguration();
-        dbClient = new AmazonDynamoDBClient(credentialsProvider);
+        AWSCredentialsProvider credentialsProvider = AWSMobileClient.getInstance().getCredentialsProvider();
+        AWSConfiguration configuration = AWSMobileClient.getInstance().getConfiguration();
+        AmazonDynamoDBClient dbClient = new AmazonDynamoDBClient(credentialsProvider);
 
         dbMapper = DynamoDBMapper.builder()
                 .dynamoDBClient(dbClient)

@@ -2,7 +2,6 @@ package macro.noteorganizer;
 
 import android.content.Intent;
 import android.support.annotation.NonNull;
-import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -12,41 +11,31 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
-import android.widget.TextView;
-
+import com.amazonaws.ResponseMetadata;
+import com.amazonaws.auth.AWSCognitoIdentityProvider;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.mobile.auth.core.IdentityManager;
-import com.amazonaws.mobile.auth.core.SignInStateChangeListener;
 import com.amazonaws.mobile.client.AWSMobileClient;
 import com.amazonaws.mobile.config.AWSConfiguration;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedList;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
-import com.amazonaws.services.dynamodbv2.model.Condition;
+
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import macro.noteorganizer.models.nosql.Notes2DO;
 
@@ -56,7 +45,7 @@ public class Notes extends AppCompatActivity {
 
     DynamoDBMapper dynamoDBMapper;
     RecyclerView recyclerView;
-
+    RecyclerViewAdapter adapter;
     List<Notes2DO> notesDOS;
 
     @Override
@@ -73,15 +62,16 @@ public class Notes extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // Create new note activity...
                 startActivity(new Intent(Notes.this, AddNewNote.class));
             }
         });
 
+        // Precursor to getting access to the authorized AWS resources
         AWSCredentialsProvider credentialsProvider = AWSMobileClient.getInstance().getCredentialsProvider();
         AWSConfiguration configuration = AWSMobileClient.getInstance().getConfiguration();
 
         // Initialize DB Client
-
         AmazonDynamoDBClient dynamoDBClient = new AmazonDynamoDBClient(credentialsProvider);
 
         this.dynamoDBMapper = DynamoDBMapper.builder()
@@ -91,15 +81,34 @@ public class Notes extends AppCompatActivity {
 
         RetrieveDBInfo();
 
+        /*
+            Captures RecyclerView
+            Adds dividers
+            Sets custom adapter and layout manager
+        */
         recyclerView = (RecyclerView) findViewById(R.id.recycler);
+
         RecyclerView.ItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
         recyclerView.addItemDecoration(divider);
+
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
+
         recyclerView.setHasFixedSize(false);
-        recyclerView.setAdapter(new RecyclerViewAdapter(notesDOS));
+
+        adapter = new RecyclerViewAdapter(notesDOS);
+        recyclerView.setAdapter(adapter);
     }
 
+    /*
+        When restarting Notes activity check for any changes to data set
+     */
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        RetrieveDBInfo();
+        adapter.notifyDataSetChanged();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -121,21 +130,23 @@ public class Notes extends AppCompatActivity {
             return true;
         }
 
-
-
         return super.onOptionsItemSelected(item);
     }
 
+    public void SignOut() {
+        IdentityManager.getDefaultIdentityManager().signOut();
+    }
 
+    /*
+        DynamoDB querying is an asynchronous task.
+        Following code:
+        1) Queries database for all notes relating to the userId
+        2) Updates list of notes and unlocks the main thread to continue init
+     */
     public void RetrieveDBInfo() {
         DBThread dbThread = new DBThread();
         dbThread.start();
-        /*new Thread(new Runnable() {
-            @Override
-            public void run() {
 
-            }
-        }).start();*/
         synchronized (dbThread) {
             try {
                 Log.d("Waiting...", "Waiting for completion");
@@ -145,43 +156,31 @@ public class Notes extends AppCompatActivity {
                 ex.printStackTrace();
             }
         }
-        /*synchronized (this) {
-            PaginatedList<Notes2DO> result = dynamoDBMapper.query(Notes2DO.class, queryExpression);
-            if (!result.isEmpty()) {
-                notesDOS.addAll(result);
-
-            }
-        }*/
-
-        Log.d("RetrieveDB", String.format("%d",notesDOS.size()));
-    }
-
-    public void UpdateRecyclerList() {
-
-    }
-
-    public void SignOut() {
-        IdentityManager.getDefaultIdentityManager().signOut();
     }
 
     private class DBThread extends Thread {
         final Notes2DO notesDO = new Notes2DO();
-
-
         DynamoDBQueryExpression queryExpression;
+
         @Override
         public void run() {
             synchronized (this) {
-                init();
-                PaginatedList<Notes2DO> result = dynamoDBMapper.query(Notes2DO.class, queryExpression);
-                if (!result.isEmpty()) {
+                    init();
+                    PaginatedList<Notes2DO> result = dynamoDBMapper.query(Notes2DO.class, queryExpression);
+                if (notesDOS.isEmpty()) {
+                    if (!result.isEmpty()) {
+                        notesDOS.addAll(result);
+                    }
+                }
+                else {
+                    notesDOS.clear();
                     notesDOS.addAll(result);
                 }
                 notify();
             }
         }
 
-        public void init() {
+        void init() {
             queryExpression = new DynamoDBQueryExpression().withHashKeyValues(notesDO)
                     .withConsistentRead(false);
             notesDO.setUserId(IdentityManager.getDefaultIdentityManager().getCachedUserID());
