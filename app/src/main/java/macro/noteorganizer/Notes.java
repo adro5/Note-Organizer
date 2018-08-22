@@ -14,12 +14,16 @@ import android.support.v7.widget.Toolbar;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.Toast;
 
 import com.amazonaws.ResponseMetadata;
 import com.amazonaws.auth.AWSCognitoIdentityProvider;
@@ -39,7 +43,7 @@ import java.util.List;
 
 import macro.noteorganizer.models.nosql.Notes2DO;
 
-public class Notes extends AppCompatActivity {
+public class Notes extends AppCompatActivity implements View.OnCreateContextMenuListener{
 
     private ViewPager mViewPager;
 
@@ -98,6 +102,7 @@ public class Notes extends AppCompatActivity {
 
         adapter = new RecyclerViewAdapter(notesDOS);
         recyclerView.setAdapter(adapter);
+        registerForContextMenu(recyclerView);
     }
 
     /*
