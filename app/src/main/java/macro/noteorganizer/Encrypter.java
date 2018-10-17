@@ -1,11 +1,14 @@
 package macro.noteorganizer;
 
 import android.content.Context;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -22,6 +25,17 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+
+import com.amazonaws.mobile.client.AWSMobileClient;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferState;
+import com.amazonaws.services.s3.AmazonS3Client;
+
+/*
+    Written by Adam Robinson
+ */
 
 class Encrypter {
     private String id;
@@ -82,6 +96,48 @@ class Encrypter {
         catch (IOException ex) {
             System.err.println(ex.getMessage());
         }
+
+        uploadToS3(context);
+    }
+
+    void uploadToS3(Context context) {
+        TransferUtility transferUtility = TransferUtility.builder()
+                .context(context.getApplicationContext())
+                .awsConfiguration(AWSMobileClient.getInstance().getConfiguration())
+                .s3Client(new AmazonS3Client(AWSMobileClient.getInstance().getCredentialsProvider()))
+                .build();
+
+        TransferObserver uploadObserver = transferUtility.upload("protected/salt.txt",
+                new File(context.getFilesDir() + id + "salt.txt"));
+
+        uploadObserver.setTransferListener(new TransferListener() {
+            @Override
+            public void onStateChanged(int id, TransferState state) {
+                if (TransferState.COMPLETED == state)
+                    Log.d("UPLOAD_COMP", "Upload complete");
+            }
+
+            @Override
+            public void onProgressChanged(int id, long bytesCurrent, long bytesTotal) {
+                float percentDonef = ((float)bytesCurrent / (float)bytesTotal) * 100;
+                int percentDone = (int)percentDonef;
+
+                Log.d("UPLOAD_PROGRESS", "ID:" + id + " bytesCurrent: "
+                + bytesCurrent + " bytesTotal: " + bytesTotal + " " + percentDone + "%");
+            }
+
+            @Override
+            public void onError(int id, Exception ex) {
+                System.err.println(ex.getMessage());
+            }
+        });
+
+        if (TransferState.COMPLETED == uploadObserver.getState()) {
+            Log.d("NOTE_ORG", "Transfer Completed");
+        }
+
+        Log.d("NOTE_ORG", "Bytes Transferred: " + uploadObserver.getBytesTransferred());
+        Log.d("NOTE_ORG", "Bytes Total: " + uploadObserver.getBytesTotal());
     }
 
     // Accessors
