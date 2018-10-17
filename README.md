@@ -3,8 +3,7 @@ Android version of Class (Note) Organizer
 
 This is a note taking application built as a personal project by Adam Robinson. 
 
-# Version 1.0 has been released to the Google Play Store which includes the following features:
-
+# Version 1.0 (released to Play Store):
 Adding, removing, and updating notes
 Creating an account, changing the account password, and signing out of the account
 
